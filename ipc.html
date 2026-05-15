@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mecanismos IPC | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a class="active" href="ipc.html">Comunicacion IPC</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">03</div>
+        <div>
+          <p class="kicker">Practica #3</p>
+          <h1>Mecanismos de comunicacion entre procesos (IPC)</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">IPC</span>
+          <span class="count">pipe/fifo</span>
+          <span class="count">System V</span>
+          <span class="count">shm/msg</span>
+        </div>
+      </section>
+
+      <section class="card objective-box">
+        <h2>Objetivo</h2>
+        <p>
+          Implementar y comparar mecanismos IPC para intercambio y sincronizacion de datos entre procesos: tuberias,
+          semaforos, memoria compartida y cola de mensajes, usando llamadas del sistema en Linux.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3. Mecanismos de comunicacion entre procesos - IPC</h2>
+        <p>
+          IPC permite que dos o mas procesos cooperen compartiendo datos o eventos. La eleccion del mecanismo depende
+          del tipo de comunicacion (flujo continuo, mensajes discretos o acceso a memoria compartida).
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.1 Comunicacion mediante tuberias</h2>
+        <p>
+          La comunicación entre procesos es fundamental para que intercambien datos,
+para llevar a cabo dicha comunicación, hay que tener en consideración, en primer
+lugar, si los procesos se van a comunicar en la misma máquina y si están
+emparentados, y segundo, si estos va a comunicar desde máquinas diferentes.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.1.1 Tuberias sin nombre - pipe</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <pre><code>#include &lt;stdio.h&gt;
+    #include &lt;stdlib.h&gt;
+    #include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/wait.h&gt;
+
+    #define MAXLINEA 80
+
+    int main()
+    {
+      int n, fd[2];
+      pid_t hijo;
+      char linea[MAXLINEA];
+
+      if (pipe(fd) &lt; 0) {
+        fprintf(stderr, "error de pipe");
+        exit(0);
+      }
+
+      if ((hijo = fork()) &lt; 0) {
+        fprintf(stderr, "error de fork");
+        exit(EXIT_FAILURE);
+      }
+      else if (hijo &gt; 0)
+      { /* padre */
+        close(fd[0]);
+        write(fd[1], "hola mundo\n", 12);
+        wait(NULL);
+      }
+      else {
+        close(fd[1]);
+        n = read(fd[0], linea, MAXLINEA);
+        write(STDOUT_FILENO, linea, n);
+      }
+
+      return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+          <pre><code>user@utm:~$ gcc -Wall tuberia_sin_nombre.c -o tuberia_sin_nombre
+    user@utm:~$ ./tuberia_sin_nombre
+    hola mundo</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que una pipe sin nombre solo funciona entre procesos relacionados y transmite bytes en una sola direccion.
+            </p>
+            <p>
+              Se podria mejorar cerrando siempre los extremos correctos, validando pipe() y fork() y manejando
+              multiples mensajes.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.1.2 Tuberias con nombre - fifo</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <pre><code>#include &lt;stdio.h&gt;
+    #include &lt;stdlib.h&gt;
+    #include &lt;sys/types.h&gt;
+    #include &lt;sys/stat.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;unistd.h&gt;
+
+    int main (void)
+    {
+      pid_t hijo;
+      int file;
+      char mensaje[20];
+
+      unlink("namepipe"); // borra el archivo del sistema de archivos
+      umask(~0666); // cambia la mascara de permisos por defecto
+
+      if(mkfifo("namepipe",0666)==-1)
+      {
+        perror("error en mkfifo");
+        exit(EXIT_FAILURE);
+      }
+
+      if ( (hijo=fork())==0)
+      {
+        fprintf (stdout,"soy el hijo, ID=%ld\n",(long)getpid());
+        if( (file=open("namepipe",O_WRONLY) ) ==-1)
+        {
+          perror("error en open O_WRONLY");
+          exit(EXIT_FAILURE);
+        }
+        write (file,"soy el hijo,ID...\n",18);
+        close(file);
+        getchar();
+        exit(EXIT_SUCCESS);
+    }
+
+      if (hijo > 0)
+      {
+        fprintf (stdout,"soy el padre, ID = %ld\n",(long)getpid());
+        if( (file=open("namepipe",O_RDONLY)) == -1)
+        {
+          perror("error en open O_RDONLY");
+          exit(EXIT_FAILURE);
+        }
+        int n = read(file,mensaje,20);
+        if (n &gt;= 0) {
+          if (n &lt; 20) mensaje[n] = '\0';
+          else mensaje[19] = '\0';
+        }
+        fprintf(stdout,"%s\n",mensaje);
+        close(file);
+      }
+
+      return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+          <pre><code>user@utm:~$ gcc -Wall tuberia_con_nombre.c -o tuberia_con_nombre
+    user@utm:~$ printf '\n' | ./tuberia_con_nombre
+soy el padre, ID = 28699
+soy el hijo, ID=28700
+    soy el hijo,ID...</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que una FIFO permite comunicar procesos no emparentados a traves del sistema de archivos.
+            </p>
+            <p>
+              Se podria mejorar manejando mejor los bloqueos al abrir la tuberia, limpiando el archivo FIFO al terminar
+              y validando la longitud leida.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.2 Mecanismos IPC derivados de System V</h2>
+        <p>
+          El paquete de comunicación entre procesos de los sistema UNIX System V y
+derivados, como GNU/Linux, se componen de tres mecanismos:   
+1. Los semáforos, que permiten sincronizar procesos;
+2. La memoria compartida, que va a permitir que los procesos compartan su
+espacio de direcciones virtuales; y
+3. Las colas de mensajes, que posibilitan el intercambio de datos con un
+formato determinado.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.2.1 Llaves</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es externo de las notas de la materia.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;sys/ipc.h&gt;
+
+int main(void) {
+    key_t k = ftok("/tmp", 'A');
+    printf("Llave generada: %d\n", (int)k);
+    return 0;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+            <pre><code>user@utm:~$ gcc key_demo.c -o key_demo
+user@utm:~$ ./key_demo
+Llave generada: 1093811458</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que ftok() genera una llave a partir de una ruta y un identificador de proyecto para recursos IPC.
+            </p>
+            <p>
+              Se podria mejorar verificando el valor devuelto por ftok(), usando rutas mas robustas y manejando posibles
+              colisiones de llave.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.2.2 Semaforos en derivados de System V</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/ipc.h&gt;
+#include &lt;sys/sem.h&gt;
+#include &lt;sys/wait.h&gt;
+
+/* Estructura necesaria para semctl */
+union semun {
+    int val;
+};
+
+int main(int argc, char *argv[]) {
+
+    key_t llave;
+    int semid;
+    pid_t pid;
+    struct sembuf op;
+    union semun arg;
+
+    /* Generar clave IPC */
+    llave = ftok(argv[0], 65);
+
+    /* Crear semáforo */
+    semid = semget(llave, 1, 0666 | IPC_CREAT);
+
+    /* Inicializar semáforo en 0 */
+    arg.val = 0;
+    semctl(semid, 0, SETVAL, arg);
+
+    pid = fork();
+
+    if(pid == 0) {
+
+        /* PROCESO HIJO */
+
+        printf("Hijo: esperando señal del padre...\n");
+
+        op.sem_num = 0;
+        op.sem_op = -1;  // operación P (wait)
+        op.sem_flg = 0;
+
+        semop(semid, &amp;op, 1);
+
+        printf("Hijo: señal recibida, continuando ejecución.\n");
+
+    } else {
+
+        /* PROCESO PADRE */
+
+        sleep(2);
+        printf("Padre: enviando señal al hijo...\n");
+
+        op.sem_num = 0;
+        op.sem_op = 1;   // operación V (signal)
+        op.sem_flg = 0;
+
+        semop(semid, &amp;op, 1);
+
+        wait(NULL);
+
+        /* Eliminar semáforo */
+        semctl(semid, 0, IPC_RMID);
+
+        printf("Padre: proceso terminado.\n");
+    }
+
+    return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+            <pre><code>user@utm:~$ gcc -Wall semaforo_padre_hijo.c -o semaforo_padre_hijo
+user@utm:~$ ./semaforo_padre_hijo
+Hijo: esperando señal del padre...
+Padre: enviando señal al hijo...
+Hijo: señal recibida, continuando ejecución.
+Padre: proceso terminado.</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi a sincronizar padre e hijo con semaforos System V usando operaciones P y V.
+            </p>
+            <p>
+              Se podria mejorar validando todas las llamadas de semget(), semctl() y semop(), ademas de liberar recursos
+              en caso de error.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.3 Memoria compartida</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es externo de las notas de la materia.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;sys/ipc.h&gt;
+#include &lt;sys/shm.h&gt;
+
+int main(void) {
+    key_t key = ftok("/tmp", 'M');
+    int shmid = shmget(key, 128, IPC_CREAT | 0666);
+    char *mem = (char *)shmat(shmid, NULL, 0);
+
+    strcpy(mem, "Dato escrito en memoria compartida");
+    printf("Lectura: %s\n", mem);
+    return 0;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+            <pre><code>user@utm:~$ gcc shm_demo.c -o shm_demo
+user@utm:~$ ./shm_demo
+Lectura: Dato escrito en memoria compartida</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que la memoria compartida permite intercambiar datos rapidamente entre procesos.
+            </p>
+            <p>
+              Se podria mejorar liberando la memoria con shmdt() y shmctl(), y verificando errores de shmat() y shmget().
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.4 Cola de mensajes</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;time.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;sys/msg.h&gt;
+void send_msg(int,int );
+void get_msg(int, int);
+struct msgbuf {
+ long mtype;
+ char mtext[80];
+ };
+int main(int argc, char *argv[])
+{
+ int qid;
+ int modo; // 1 = enviar/escribir, 2 = recibir/leer
+ int msgtype = 1;
+ int llave;
+ llave=ftok (argv[0],'a');
+ if (argc&gt;1)
+ {
+ if (strcmp(argv[1],"s")==0) modo=1;
+ else if (strcmp(argv[1],"r")==0) modo=2;
+ else { printf ("Use: ./mcola s|r\n");
+ exit(EXIT_FAILURE);
+ }
+ } else {
+ printf ("Use: ./mcola s|r\n");
+ exit(EXIT_FAILURE);
+ }
+ // Crea cola de mensajes
+ if ( (qid = msgget(llave, IPC_CREAT | 0666))==-1)
+ {
+ perror("msgget");
+ exit(EXIT_FAILURE);
+ }
+ if (modo == 2) get_msg(qid, msgtype);
+ else send_msg(qid, msgtype);
+ return(EXIT_SUCCESS);
+ }
+void send_msg(int qid, int msgtype)
+{
+ struct msgbuf msg;
+ time_t t;
+ msg.mtype = msgtype;
+ time(&amp;t);
+ snprintf(msg.mtext, sizeof(msg.mtext), "El mensaje salió el: %s", ctime(&amp;t));
+ // Enviar/Escribir en la cola
+ if (msgsnd(qid, (void *) &amp;msg, sizeof(msg.mtext), IPC_NOWAIT) == -1)
+ {
+ perror("ERROR en msgsnd");
+ exit(EXIT_FAILURE);
+ }
+ printf("Mensaje enviado: %s\n", msg.mtext);
+ }
+void get_msg(int qid, int msgtype)
+{
+ struct msgbuf msg;
+// Recibir/Leer de la cola
+if (msgrcv(qid,(void*)&amp;msg,sizeof(msg.mtext),msgtype,MSG_NOERROR|
+IPC_NOWAIT) == -1) 
+{
+ if (errno != ENOMSG)
+ {
+ perror("ERROR en msgrcv");
+ exit(EXIT_FAILURE);
+ }
+ printf("No hay mensajes disponibles para leer/recibir con msgrcv()\n");
+ } else printf("Mensaje recibido: %s\n", msg.mtext);
+ }</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+            <pre><code>user@utm:~$ gcc -Wall mcola.c -o mcola
+user@utm:~$ ./mcola s
+Mensaje enviado: El mensaje salió el: Thu May 14 22:35:27 2026
+
+user@utm:~$ ./mcola r
+Mensaje recibido: El mensaje salió el: Thu May 14 22:35:27 2026</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi a usar colas de mensajes para enviar y recibir estructuras con un tipo definido.
+            </p>
+            <p>
+              Se podria mejorar separando mejor modo de envio y lectura, validando argumentos y liberando la cola al
+              final si ya no se usa.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>3.5 Informacion de IPC por medio de comandos del sistema</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Comandos</h3>
+            <p class="output-note">Nota: Este codigo es externo de las notas de la materia.</p>
+            <pre><code># Ver todos los recursos IPC activos
+ipcs
+
+# Ver permisos del archivo de semaforos del kernel
+ls -la /proc/sys/kernel/sem
+
+# Ver valor del limite de semaforos del kernel
+cat /proc/sys/kernel/sem
+
+# Ver permisos del archivo de memoria compartida maxima
+ls -la /proc/sys/kernel/shmmax
+
+# Ver permisos del archivo de semaforos del kernel
+ls -la /proc/sys/kernel/sem
+
+# Ver permisos del archivo de tamaño maximo de mensajes
+ls -la /proc/sys/kernel/msgmax</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+            <pre><code>user@utm:~$ ipcs
+
+------ Colas de mensajes -----
+key        msqid      propietario perms      bytes utilizados mensajes
+0x610697c7 0          jafet-alej 666        0            0
+
+---- Segmentos memoria compartida ----
+key        shmid      propietario perms      bytes      nattch     estado
+0x00781629 0          postgres   600        56         9
+
+------ Matrices semáforo -------
+key        semid      propietario perms      nsems
+
+user@utm:~$ ls -la /proc/sys/kernel/sem
+-rw-r--r-- 1 root root 0 may 14 22:40 /proc/sys/kernel/sem
+
+user@utm:~$ cat /proc/sys/kernel/sem
+32000   1024000000      500     32000
+
+user@utm:~$ ls -la /proc/sys/kernel/shmmax
+-rw-r--r-- 1 root root 0 may 14 22:40 /proc/sys/kernel/shmmax
+
+user@utm:~$ ls -la /proc/sys/kernel/sem
+-rw-r--r-- 1 root root 0 may 14 22:40 /proc/sys/kernel/sem
+
+user@utm:~$ ls -la /proc/sys/kernel/msgmax
+-rw-r--r-- 1 root root 0 may 14 22:40 /proc/sys/kernel/msgmax</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi a consultar recursos IPC activos y limites del kernel con ipcs y /proc/sys/kernel.
+            </p>
+            <p>
+              Se podria mejorar automatizando la consulta con un script, explicando mejor cada campo y unificando
+              el formato de salida.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+        </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">Comunicacion entre procesos</a>
+        </div>
+
+        <div>
+          <p>Ingenieria en Computacion</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 - Jafet Alejandro Vásquez Suárez y Abdiel Gónzales Gómez · UTM · Sistemas Operativos</p>
+        <p>6to Semestre · 2025-2026 · C/C++ · Linux · POSIX</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

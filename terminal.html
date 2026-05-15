@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terminal Interactiva | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>
+        <a class="active" href="terminal.html">Terminal</a>
+        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">Terminal</div>
+        <div>
+          <p class="kicker">Herramienta Interactiva</p>
+          <h1>Mini Terminal - Implementacion de comandos del sistema en C</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">Avanzado</span>
+          <span class="count">C</span>
+          <span class="count">Terminal</span>
+          <span class="count">Syscalls</span>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>Terminal Interactiva</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Mini Terminal en C</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+            <p><strong>Descripción:</strong> Mini terminal que implementa comandos del sistema como <code>pwd</code>, <code>ls</code>, <code>cd</code>, <code>cat</code>, <code>mkdir</code>, <code>stat</code>, <code>date</code>, <code>who</code>, <code>free</code>, <code>ip</code>, <code>mac</code> y más.</p>
+            <p><strong>Comandos disponibles:</strong></p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+              <li><code>pwd</code> — Muestra el directorio actual</li>
+              <li><code>cd &lt;directorio&gt;</code> — Cambia de directorio</li>
+              <li><code>ls [-l|-a|-i]</code> — Lista contenido del directorio</li>
+              <li><code>mkdir &lt;directorio&gt;</code> — Crea un nuevo directorio</li>
+              <li><code>cat &lt;archivo&gt;</code> — Muestra el contenido de archivos</li>
+              <li><code>rm &lt;archivo&gt;</code> — Elimina archivos</li>
+              <li><code>stat &lt;archivo&gt;</code> — Muestra metadatos de archivo</li>
+              <li><code>date [-u]</code> — Muestra la fecha y hora</li>
+              <li><code>who</code> — Usuarios conectados</li>
+              <li><code>free [-h]</code> — Uso de memoria del sistema</li>
+              <li><code>ip</code> — Direcciones IP de tarjetas de red</li>
+              <li><code>mac</code> — Direcciones MAC de tarjetas de red</li>
+              <li><code>exit</code> — Salir de la terminal</li>
+            </ul>
+          </div>
+          <div class="pane output-pane">
+            <h3>Codigo Fuente - Dominio Publico</h3>
+            <p><strong>Este codigo es de dominio publico y puede ser copiado y utilizado libremente por quien sea.</strong></p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;dirent.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/utsname.h&gt;
+#include &lt;time.h&gt;
+#include &lt;utmp.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;termios.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;sys/ioctl.h&gt;
+#include &lt;net/if.h&gt;
+#include &lt;sys/types.h&gt;
+
+// Prototipos de funciones
+void function_mkdir(char *parametros[]);
+void pwd(char *parametros[]);
+void function_ls(char *parametros[]);
+void function_cat(char *parametros[]);
+void function_rm(char *parametros[]);
+void function_rename(char *parametros[]);
+void function_find(char *parametros[]);
+void function_cd(char *parametros[]);
+void function_stat(char *parametros[]);
+void function_vfstat(char *parametros[]);
+void function_unlink_cmd(char *parametros[]);
+void function_uname(char *parametros[]);
+void function_date(char *parametros[]);
+void function_who(char *parametros[]);
+void function_mesg(char *parametros[]);
+void function_wall(char *parametros[]);
+void function_free(char *parametros[]);
+void function_ip(char *parametros[]);
+void function_mac(char *parametros[]);
+
+static void permisos_a_cadena(mode_t mode, char out[11]);
+
+typedef void (*HandlerComando)(char **args);
+
+typedef struct {
+    char *nombre;
+    HandlerComando funcion;
+    char *descripcion;
+} Comando;
+
+int main(int argc, char *argv[]) {
+    (void)argc;
+    (void)argv;
+
+    Comando tabla_comandos[] = {
+        {"pwd",    pwd,                 "Muestra el directorio actual"},
+        {"cd",     function_cd,         "Cambia de directorio"},
+        {"mkdir",  function_mkdir,      "Crea un nuevo directorio"},
+        {"ls",     function_ls,         "Lista contenido (-l, -a, -i, -la, -li, -lai)"},
+        {"cat",    function_cat,        "Muestra el contenido de uno o mas archivos"},
+        {"rm",     function_rm,         "Elimina uno o mas archivos"},
+        {"unlink", function_unlink_cmd, "Elimina uno o mas archivos (unlink)"},
+        {"rename", function_rename,     "Renombra o mueve un archivo"},
+        {"stat",   function_stat,       "Muestra metadatos de archivo (stat)"},
+        {"vfstat", function_vfstat,     "Muestra metadatos usando fstat"},
+        {"uname",  function_uname,      "Muestra informacion del sistema"},
+        {"find",   function_find,       "Busca archivo en un solo nivel (sin recursion)"},
+        {"date",   function_date,        "Muestra la fecha y hora actual"},
+        {"who",    function_who,         "Muestra usuarios conectados"},
+        {"mesg",   function_mesg,        "Habilita o deshabilita mensajes en el terminal"},
+        {"wall",   function_wall,        "Envia un mensaje a todos los usuarios"},
+        {"free",   function_free,        "Muestra uso de memoria del sistema"},
+        {"ip",    function_ip,           "Muestra las direcciones IP de las tarjetas de red"},
+        {"mac",   function_mac,          "Muestra las direcciones MAC de las tarjetas de red"},
+        {NULL,     NULL,                NULL}
+    };
+
+    char entrada[200];
+    char *parametros[64];
+
+    printf("MiniShell Iniciada:\n");
+
+    while (1) {
+        printf("$ ");
+        if (fgets(entrada, sizeof(entrada), stdin) == NULL) break;
+
+        entrada[strcspn(entrada, "\n")] = 0;
+
+        char *token = strtok(entrada, " \t");
+        int i = 0;
+        while (token != NULL &amp;&amp; i &lt; 63) {
+            parametros[i++] = token;
+            token = strtok(NULL, " \t");
+        }
+        parametros[i] = NULL;
+
+        if (parametros[0] != NULL) {
+            if (strcmp(parametros[0], "exit") == 0) break;
+
+            int encontrado = 0;
+            for (int j = 0; tabla_comandos[j].nombre != NULL; j++) {
+                if (strcmp(parametros[0], tabla_comandos[j].nombre) == 0) {
+                    tabla_comandos[j].funcion(parametros);
+                    encontrado = 1;
+                    break;
+                }
+            }
+            if (!encontrado) {
+                printf("Comando no encontrado: %s\n", parametros[0]);
+            }
+        }
+        printf("\n");
+    }
+    return 0;
+}
+
+// Helpers
+static void permisos_a_cadena(mode_t mode, char out[11]) {
+    out[0] = S_ISDIR(mode) ? 'd' : S_ISLNK(mode) ? 'l' : '-';
+    out[1] = (mode &amp; S_IRUSR) ? 'r' : '-';
+    out[2] = (mode &amp; S_IWUSR) ? 'w' : '-';
+    out[3] = (mode &amp; S_IXUSR) ? 'x' : '-';
+    out[4] = (mode &amp; S_IRGRP) ? 'r' : '-';
+    out[5] = (mode &amp; S_IWGRP) ? 'w' : '-';
+    out[6] = (mode &amp; S_IXGRP) ? 'x' : '-';
+    out[7] = (mode &amp; S_IROTH) ? 'r' : '-';
+    out[8] = (mode &amp; S_IWOTH) ? 'w' : '-';
+    out[9] = (mode &amp; S_IXOTH) ? 'x' : '-';
+    out[10] = '\0';
+}
+
+// Comandos nuevos
+void function_cd(char *parametros[]) {
+    const char *destino = parametros[1];
+    if (destino == NULL) {
+        destino = getenv("HOME");
+        if (destino == NULL) {
+            fprintf(stderr, "cd: HOME no esta definido\n");
+            return;
+        }
+    }
+    if (chdir(destino) == -1) perror("cd");
+}
+
+void function_stat(char *parametros[]) {
+    if (parametros[1] == NULL) {
+        fprintf(stderr, "Error: stat requiere al menos un archivo\n");
+        return;
+    }
+
+    for (int i = 1; parametros[i] != NULL; i++) {
+        struct stat st;
+        if (stat(parametros[i], &amp;st) == -1) {
+            perror(parametros[i]);
+            continue;
+        }
+
+        char perms[11], tbuf[64];
+        permisos_a_cadena(st.st_mode, perms);
+        struct tm *tm_info = localtime(&amp;st.st_mtime);
+        if (tm_info) strftime(tbuf, sizeof(tbuf), "%Y-%m-%d %H:%M:%S", tm_info);
+        else snprintf(tbuf, sizeof(tbuf), "N/A");
+
+        printf("Archivo: %s\n", parametros[i]);
+        printf("  Inodo: %llu\n", (unsigned long long)st.st_ino);
+        printf("  Permisos: %s\n", perms);
+        printf("  Links: %lu\n", (unsigned long)st.st_nlink);
+        printf("  UID:GID: %u:%u\n", st.st_uid, st.st_gid);
+        printf("  Tamano: %lld bytes\n", (long long)st.st_size);
+        printf("  Modificado: %s\n\n", tbuf);
+    }
+}
+
+void function_vfstat(char *parametros[]) {
+    if (parametros[1] == NULL) {
+        fprintf(stderr, "Error: vfstat requiere al menos un archivo\n");
+        return;
+    }
+
+    for (int i = 1; parametros[i] != NULL; i++) {
+        int fd = open(parametros[i], O_RDONLY);
+        if (fd == -1) {
+            perror(parametros[i]);
+            continue;
+        }
+
+        struct stat st;
+        if (fstat(fd, &amp;st) == -1) {
+            perror("fstat");
+            close(fd);
+            continue;
+        }
+
+        char perms[11], tbuf[64];
+        permisos_a_cadena(st.st_mode, perms);
+        struct tm *tm_info = localtime(&amp;st.st_mtime);
+        if (tm_info) strftime(tbuf, sizeof(tbuf), "%Y-%m-%d %H:%M:%S", tm_info);
+        else snprintf(tbuf, sizeof(tbuf), "N/A");
+
+        printf("Archivo(fd): %s\n", parametros[i]);
+        printf("  Inodo: %llu\n", (unsigned long long)st.st_ino);
+        printf("  Permisos: %s\n", perms);
+        printf("  Links: %lu\n", (unsigned long)st.st_nlink);
+        printf("  UID:GID: %u:%u\n", st.st_uid, st.st_gid);
+        printf("  Tamano: %lld bytes\n", (long long)st.st_size);
+        printf("  Modificado: %s\n\n", tbuf);
+
+        close(fd);
+    }
+}
+
+void function_unlink_cmd(char *parametros[]) {
+    if (parametros[1] == NULL) {
+        fprintf(stderr, "Error: unlink requiere al menos un archivo\n");
+        return;
+    }
+
+    for (int i = 1; parametros[i] != NULL; i++) {
+        if (unlink(parametros[i]) == -1) perror(parametros[i]);
+        else printf("unlink: '%s' eliminado\n", parametros[i]);
+    }
+}
+
+void function_uname(char *parametros[]) {
+    struct utsname u;
+    if (uname(&amp;u) == -1) {
+        perror("uname");
+        return;
+    }
+
+    if (parametros[1] &amp;&amp; strcmp(parametros[1], "-a") == 0) {
+        printf("%s %s %s %s %s\n",
+               u.sysname, u.nodename, u.release, u.version, u.machine);
+    } else {
+        printf("%s\n", u.sysname);
+    }
+}
+
+void function_date(char *parametros[]) {
+    int flag_u = (parametros[1] &amp;&amp; strcmp(parametros[1], "-u") == 0);
+    time_t t = time(NULL);
+    struct tm *tm_info = flag_u ? gmtime(&amp;t) : localtime(&amp;t);
+    char buf[64];
+    strftime(buf, sizeof(buf), "%a %b %d %H:%M:%S %Z %Y", tm_info);
+    printf("%s\n", buf);
+}
+
+void function_who(char *parametros[]) {
+    (void)parametros;
+    setutent();
+    struct utmp *entry;
+    while ((entry = getutent()) != NULL) {
+        if (entry-&gt;ut_type == USER_PROCESS) {
+            char tbuf[32];
+            time_t t = (time_t)entry-&gt;ut_tv.tv_sec;
+            struct tm *tm_info = localtime(&amp;t);
+            if (tm_info) strftime(tbuf, sizeof(tbuf), "%Y-%m-%d %H:%M", tm_info);
+            else snprintf(tbuf, sizeof(tbuf), "N/A");
+            printf("%-12s %-10s %s (%s)\n",
+                   entry-&gt;ut_user, entry-&gt;ut_line, tbuf, entry-&gt;ut_host);
+        }
+    }
+    endutent();
+}
+
+void function_mesg(char *parametros[]) {
+    int fd = open(ttyname(STDIN_FILENO), O_RDONLY);
+    if (fd == -1) { perror("mesg"); return; }
+    struct stat st;
+    if (fstat(fd, &amp;st) == -1) { perror("mesg"); close(fd); return; }
+    close(fd);
+
+    if (parametros[1] == NULL) {
+        printf("mesg is %s\n", (st.st_mode &amp; S_IWGRP) ? "y" : "n");
+    } else if (strcmp(parametros[1], "y") == 0) {
+        if (chmod(ttyname(STDIN_FILENO), st.st_mode | S_IWGRP) == -1) perror("mesg");
+        else printf("mesg: mensajes habilitados\n");
+    } else if (strcmp(parametros[1], "n") == 0) {
+        if (chmod(ttyname(STDIN_FILENO), st.st_mode &amp; ~S_IWGRP) == -1) perror("mesg");
+        else printf("mesg: mensajes deshabilitados\n");
+    } else {
+        fprintf(stderr, "Uso: mesg [y|n]\n");
+    }
+}
+
+void function_wall(char *parametros[]) {
+    if (parametros[1] == NULL) {
+        fprintf(stderr, "Uso: wall &lt;mensaje&gt;\n");
+        return;
+    }
+
+    char mensaje[512];
+    mensaje[0] = '\0';
+    for (int i = 1; parametros[i] != NULL; i++) {
+        if (i &gt; 1) strncat(mensaje, " ", sizeof(mensaje) - strlen(mensaje) - 1);
+        strncat(mensaje, parametros[i], sizeof(mensaje) - strlen(mensaje) - 1);
+    }
+
+    pid_t pid = fork();
+    if (pid == -1) { perror("wall"); return; }
+    if (pid == 0) {
+        char *args[] = {"wall", mensaje, NULL};
+        execvp("wall", args);
+        perror("wall");
+        _exit(1);
+    }
+    int status;
+    waitpid(pid, &amp;status, 0);
+}
+
+void function_free(char *parametros[]) {
+    int flag_h = (parametros[1] &amp;&amp; strcmp(parametros[1], "-h") == 0);
+    FILE *f = fopen("/proc/meminfo", "r");
+    if (!f) { perror("free"); return; }
+
+    long total = 0, libre = 0, disponible = 0, buffers = 0, cached = 0,
+         swap_total = 0, swap_libre = 0;
+    char linea[128], clave[64];
+    long valor;
+
+    while (fgets(linea, sizeof(linea), f)) {
+        if (sscanf(linea, "%63s %ld", clave, &amp;valor) == 2) {
+            if      (strcmp(clave, "MemTotal:")     == 0) total       = valor;
+            else if (strcmp(clave, "MemFree:")      == 0) libre       = valor;
+            else if (strcmp(clave, "MemAvailable:") == 0) disponible  = valor;
+            else if (strcmp(clave, "Buffers:")      == 0) buffers     = valor;
+            else if (strcmp(clave, "Cached:")       == 0) cached      = valor;
+            else if (strcmp(clave, "SwapTotal:")    == 0) swap_total  = valor;
+            else if (strcmp(clave, "SwapFree:")     == 0) swap_libre  = valor;
+        }
+    }
+    fclose(f);
+
+    long usado = total - libre - buffers - cached;
+    long swap_usado = swap_total - swap_libre;
+
+    if (flag_h) {
+        printf("%-10s %8s %8s %8s %8s %8s\n",
+               "", "total", "usado", "libre", "buf/cach", "disponible");
+        printf("%-10s %7ldM %7ldM %7ldM %7ldM %7ldM\n",
+               "Mem:",
+               total/1024, usado/1024, libre/1024,
+               (buffers+cached)/1024, disponible/1024);
+        printf("%-10s %7ldM %7ldM %7ldM\n",
+               "Swap:",
+               swap_total/1024, swap_usado/1024, swap_libre/1024);
+    } else {
+        printf("%-10s %10s %10s %10s %10s %10s\n",
+               "", "total", "usado", "libre", "buf/cach", "disponible");
+        printf("%-10s %10ld %10ld %10ld %10ld %10ld\n",
+               "Mem:",
+               total, usado, libre, buffers+cached, disponible);
+        printf("%-10s %10ld %10ld %10ld\n",
+               "Swap:",
+               swap_total, swap_usado, swap_libre);
+    }
+}
+
+void function_ip(char *parametros[]) {
+    (void)parametros;
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd == -1) { perror("ip: socket"); return; }
+
+    struct ifconf ifc;
+    char buf[8192];
+    ifc.ifc_len = sizeof(buf);
+    ifc.ifc_buf = buf;
+
+    if (ioctl(fd, SIOCGIFCONF, &amp;ifc) == -1) {
+        perror("ip: ioctl SIOCGIFCONF");
+        close(fd);
+        return;
+    }
+
+    int n = ifc.ifc_len / (int)sizeof(struct ifreq);
+    printf("%-16s  %s\n", "Interfaz", "Direccion IP");
+    printf("%-16s  %s\n", "--------", "------------");
+
+    for (int i = 0; i &lt; n; i++) {
+        struct ifreq ifr;
+        strncpy(ifr.ifr_name, ifc.ifc_req[i].ifr_name, IFNAMSIZ - 1);
+        ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+
+        if (ioctl(fd, SIOCGIFADDR, &amp;ifr) == -1) continue;
+
+        struct sockaddr_in *addr = (struct sockaddr_in *)&amp;ifr.ifr_addr;
+        char ip_str[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &amp;addr-&gt;sin_addr, ip_str, sizeof(ip_str));
+        printf("%-16s  %s\n", ifr.ifr_name, ip_str);
+    }
+
+    close(fd);
+}
+
+void function_mac(char *parametros[]) {
+    (void)parametros;
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd == -1) { perror("mac: socket"); return; }
+
+    struct ifconf ifc;
+    char buf[8192];
+    ifc.ifc_len = sizeof(buf);
+    ifc.ifc_buf = buf;
+
+    if (ioctl(fd, SIOCGIFCONF, &amp;ifc) == -1) {
+        perror("mac: ioctl SIOCGIFCONF");
+        close(fd);
+        return;
+    }
+
+    int n = ifc.ifc_len / (int)sizeof(struct ifreq);
+    printf("%-16s  %s\n", "Interfaz", "Direccion MAC");
+    printf("%-16s  %s\n", "--------", "-------------");
+
+    for (int i = 0; i &lt; n; i++) {
+        struct ifreq ifr;
+        strncpy(ifr.ifr_name, ifc.ifc_req[i].ifr_name, IFNAMSIZ - 1);
+        ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+
+        if (ioctl(fd, SIOCGIFHWADDR, &amp;ifr) == -1) continue;
+
+        unsigned char *mac = (unsigned char *)ifr.ifr_hwaddr.sa_data;
+        printf("%-16s  %02x:%02x:%02x:%02x:%02x:%02x\n",
+               ifr.ifr_name,
+               mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    }
+
+    close(fd);
+}
+
+void function_find(char *parametros[]) {
+    if (parametros[1] == NULL) {
+        fprintf(stderr, "Uso: find &lt;nombre_archivo&gt; [directorio]\n");
+        return;
+    }
+
+    const char *nombre = parametros[1];
+    const char *base = (parametros[2] != NULL) ? parametros[2] : ".";
+
+    DIR *dir = opendir(base);
+    if (!dir) {
+        perror("find");
+        return;
+    }
+
+    struct dirent *ent;
+    int total = 0;
+    char ruta[4096];
+
+    while ((ent = readdir(dir)) != NULL) {
+        if (strcmp(ent-&gt;d_name, nombre) == 0) {
+            if (strcmp(base, "/") == 0) snprintf(ruta, sizeof(ruta), "/%s", ent-&gt;d_name);
+            else snprintf(ruta, sizeof(ruta), "%s/%s", base, ent-&gt;d_name);
+
+            printf("\033[0;32m[Encontrado]: %s\033[0m\n", ruta);
+            total++;
+        }
+    }
+
+    closedir(dir);
+
+    if (total == 0) {
+        printf("\033[0;31mNo se encontraron coincidencias para: %s\033[0m\n", nombre);
+    } else {
+        printf("Busqueda finalizada. Se encontraron %d coincidencia(s).\n", total);
+    }
+}
+
+void function_rename(char *parametros[]) {
+    if (parametros[1] == NULL || parametros[2] == NULL) {
+        printf("Error: rename requiere &lt;origen&gt; y &lt;destino&gt;\n");
+        return;
+    }
+    if (rename(parametros[1], parametros[2]) == -1) perror("rename error");
+    else printf("Se ha renombrado '%s' a '%s'\n", parametros[1], parametros[2]);
+}
+
+void function_rm(char *parametros[]) {
+    if (parametros[1] == NULL) {
+        printf("Error: rm requiere un archivo\n");
+        return;
+    }
+    for (int i = 1; parametros[i] != NULL; i++) {
+        if (unlink(parametros[i]) == -1) perror(parametros[i]);
+        else printf("Archivo '%s' eliminado.\n", parametros[i]);
+    }
+}
+
+void function_mkdir(char *parametros[]) {
+    if (parametros[1] == NULL) {
+        printf("Error: mkdir requiere una ruta\n");
+        return;
+    }
+    if (mkdir(parametros[1], 0777) == -1) perror("mkdir error");
+    else printf("Directorio '%s' creado.\n", parametros[1]);
+}
+
+void pwd(char *parametros[]) {
+    (void)parametros;
+    char cwd[4096];
+    if (getcwd(cwd, sizeof(cwd)) != NULL) printf("%s", cwd);
+    else perror("pwd error");
+}
+
+void function_ls(char *parametros[]) {
+    int flag_l = 0, flag_a = 0, flag_i = 0;
+    const char *ruta = ".";
+
+    for (int k = 1; parametros[k] != NULL; k++) {
+        if (parametros[k][0] == '-') {
+            for (int j = 1; parametros[k][j] != '\0'; j++) {
+                if (parametros[k][j] == 'l') flag_l = 1;
+                else if (parametros[k][j] == 'a') flag_a = 1;
+                else if (parametros[k][j] == 'i') flag_i = 1;
+                else {
+                    fprintf(stderr, "ls: opcion invalida -- '%c'\n", parametros[k][j]);
+                    return;
+                }
+            }
+        } else {
+            ruta = parametros[k];
+        }
+    }
+
+    DIR *d = opendir(ruta);
+    if (!d) {
+        perror("ls");
+        return;
+    }
+
+    struct dirent *e;
+    char fullpath[4096];
+
+    while ((e = readdir(d)) != NULL) {
+        if (!flag_a &amp;&amp; e-&gt;d_name[0] == '.') continue;
+
+        if (strcmp(ruta, "/") == 0) snprintf(fullpath, sizeof(fullpath), "/%s", e-&gt;d_name);
+        else snprintf(fullpath, sizeof(fullpath), "%s/%s", ruta, e-&gt;d_name);
+
+        struct stat st;
+        if (lstat(fullpath, &amp;st) == -1) {
+            perror(e-&gt;d_name);
+            continue;
+        }
+
+        if (flag_i) printf("%8llu ", (unsigned long long)st.st_ino);
+
+        if (flag_l) {
+            char perms[11], tbuf[32];
+            permisos_a_cadena(st.st_mode, perms);
+
+            struct tm *tm_info = localtime(&amp;st.st_mtime);
+            if (tm_info) strftime(tbuf, sizeof(tbuf), "%b %d %H:%M", tm_info);
+            else snprintf(tbuf, sizeof(tbuf), "N/A");
+
+            printf("%s %3lu %8lld %s %s\n",
+                   perms, (unsigned long)st.st_nlink, (long long)st.st_size, tbuf, e-&gt;d_name);
+        } else {
+            printf("%s\n", e-&gt;d_name);
+        }
+    }
+
+    closedir(d);
+}
+
+void function_cat(char *parametros[]) {
+    if (parametros[1] == NULL) {
+        printf("Error: cat requiere un archivo\n");
+        return;
+    }
+
+    char buf[1024];
+    ssize_t r;
+
+    for (int i = 1; parametros[i] != NULL; i++) {
+        int fd = open(parametros[i], O_RDONLY);
+        if (fd == -1) {
+            perror(parametros[i]);
+            continue;
+        }
+
+        struct stat s;
+        if (fstat(fd, &amp;s) == -1) {
+            perror("cat fstat");
+            close(fd);
+            continue;
+        }
+
+        if (S_ISDIR(s.st_mode)) {
+            fprintf(stderr, "cat: %s: es directorio\n", parametros[i]);
+            close(fd);
+            continue;
+        }
+
+        while ((r = read(fd, buf, sizeof(buf))) &gt; 0) {
+            (void)write(STDOUT_FILENO, buf, (size_t)r);
+        }
+
+        close(fd);
+    }
+}</code></pre>
+            <p style="font-size: 0.9em; color: #666; margin-top: 10px;"><strong>Compilar:</strong> <code>gcc -Wall minishell.c -o minishell &amp;&amp; ./minishell</code></p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+        </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">Comunicacion entre procesos</a>
+          <a href="terminal.html">Terminal Interactiva</a>
+        </div>
+
+        <div>
+          <p>Ingenieria en Computacion</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2025 Bitacora SO. Todos los derechos reservados.</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

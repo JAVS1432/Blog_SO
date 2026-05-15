@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Procesos e Hilos | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a class="active" href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">02</div>
+        <div>
+          <p class="kicker">Practica #2</p>
+          <h1>Procesos e Hilos: llamadas al sistema y ejecucion concurrente</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">C</span>
+          <span class="count">fork</span>
+          <span class="count">wait/waitpid</span>
+          <span class="count">pthreads</span>
+        </div>
+      </section>
+
+      <section class="card objective-box">
+        <h2>Objetivo</h2>
+        <p>
+          Entender como el sistema operativo crea, identifica y sincroniza procesos, y comparar ese modelo con la
+          creacion de hilos en un mismo espacio de memoria.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>2.1 Introduccion a procesos</h2>
+        <p>
+          Un proceso es una instancia de un programa en ejecucion. Cada proceso tiene PID, estado, memoria y recursos
+          propios. El sistema operativo planifica estos procesos para dar sensacion de paralelismo.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>2.2 Practica 1: Arbol de procesos con fork() y waitpid()</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+    #include &lt;stdlib.h&gt;
+    #include &lt;unistd.h&gt;
+    #include &lt;sys/wait.h&gt;
+
+    void crear_arbol(int nivel_actual, int max_nivel) {
+
+      printf("%*sProceso: PID = %d, Padre: PID = %d (Nivel %d)\n",
+           nivel_actual * 4, "", getpid(), getppid(), nivel_actual);
+      fflush(stdout);
+
+      if (nivel_actual &lt; max_nivel) {
+        pid_t hijo1 = fork();
+        if (hijo1 == 0) {
+          // Proceso hijo 1
+          crear_arbol(nivel_actual + 1, max_nivel);
+          exit(0);
+        } else if (hijo1 &gt; 0) {
+          pid_t hijo2 = fork();
+          if (hijo2 == 0) {
+            // Proceso hijo 2
+            crear_arbol(nivel_actual + 1, max_nivel);
+            exit(0);
+          } else if (hijo2 &gt; 0) {
+            // Proceso padre espera a ambos hijos
+            waitpid(hijo1, NULL, 0);
+            waitpid(hijo2, NULL, 0);
+
+            sleep(25);
+          } else {
+            perror("Error al crear hijo2");
+            exit(1);
+          }
+        } else {
+          perror("Error al crear hijo1");
+          exit(1);
+        }
+      }
+    }
+
+    int main(int argc, char *argv[]) {
+      // 1. Validar que se haya pasado un argumento
+      if (argc != 2) {
+        fprintf(stderr, "Error: Debes proporcionar la altura del arbol.\n");
+        fprintf(stderr, "Uso: %s &lt;altura&gt;\n", argv[0]);
+        return 1;
+      }
+
+      // 2. Convertir el argumento a entero
+      int max_nivel = atoi(argv[1]);
+
+      // 3. Validar el rango: mayor a 4 y menor a 10 (es decir: 5, 6, 7, 8, 9)
+      if (max_nivel &lt;= 3 || max_nivel &gt;= 10) {
+        fprintf(stderr, "Error: La altura debe ser mayor a 4 y menor a 10.\n");
+        return 1;
+      }
+
+      printf("Iniciando arbol de procesos con altura: %d\n", max_nivel);
+      printf("--------------------------------------------------\n");
+
+      // Llamada inicial (nivel 0)
+      crear_arbol(0, max_nivel);
+
+      return 0;
+    }</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+          <pre><code>user@utm:~$ gcc -Wall arbol_procesos.c -o arbol_procesos
+    user@utm:~$ timeout 5s ./arbol_procesos 5
+    Iniciando arbol de procesos con altura: 5
+    --------------------------------------------------
+Proceso: PID = 7638, Padre: PID = 7637 (Nivel 0)
+    Proceso: PID = 7639, Padre: PID = 7638 (Nivel 1)
+    Proceso: PID = 7640, Padre: PID = 7638 (Nivel 1)
+        Proceso: PID = 7641, Padre: PID = 7639 (Nivel 2)
+        Proceso: PID = 7643, Padre: PID = 7640 (Nivel 2)
+        Proceso: PID = 7644, Padre: PID = 7640 (Nivel 2)
+        Proceso: PID = 7642, Padre: PID = 7639 (Nivel 2)
+            ... (muchas lineas adicionales) ...
+Command exited with code 124</code></pre>
+          </div>
+            <div class="pane output-pane">
+              <h3>Lo que aprendi y como se podria mejorar</h3>
+              <p>
+                Aprendi que fork() duplica el proceso y que waitpid() ayuda a controlar el orden de terminacion.
+              </p>
+              <p>
+                Se podria mejorar reemplazando sleep(25) por una espera explicita menos costosa, agregando validaciones
+                de argc y mostrando el arbol con una identacion mas configurable.
+              </p>
+            </div>
+        </div>
+      </section>
+
+        <section class="card concept-card">
+        <h2>2.3 Practica 1: Factorial padre-hijo con pipe</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+          <h3>Codigo Fuente</h3>
+          <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+          <pre><code>#include &lt;stdio.h&gt;
+    #include &lt;stdlib.h&gt;
+    #include &lt;unistd.h&gt;
+    #include &lt;sys/wait.h&gt;
+
+    unsigned long long factorial(int n) {
+      if(n == 0 || n == 1)
+        return 1;
+      return (unsigned long long)n * factorial(n - 1);
+    }
+
+    int main(int argc, char *argv[]) {
+      // 1. Validamos que el usuario haya pasado exactamente 2 numeros
+      // argc debe ser 3: [0] nombre del programa, [1] num1, [2] num2
+      if (argc != 3) {
+        fprintf(stderr, "Uso: %s &lt;num1&gt; &lt;num2&gt;\n", argv[0]);
+        return 1;
+      }
+
+      // 2. Convertimos los argumentos de string a entero usando atoi()
+      int num1 = atoi(argv[1]);
+      int num2 = atoi(argv[2]);
+
+      int pipefd[2];
+      if (pipe(pipefd) == -1) {
+        perror("Error en pipe");
+        return 1;
+      }
+
+      pid_t pid = fork();
+
+      if (pid &lt; 0) {
+        perror("Error en fork");
+        return 1;
+      }
+
+      if(pid == 0){
+        // HIJO
+        close(pipefd[1]); // cerrar escritura
+
+        int numero_hijo;
+        read(pipefd[0], &numero_hijo, sizeof(numero_hijo));
+
+        unsigned long long resultado_hijo = factorial(numero_hijo);
+        printf("Hijo calculo: %d! = %llu\n", numero_hijo, resultado_hijo);
+
+        close(pipefd[0]);
+        exit(0);
+      }
+      else {
+        // PADRE
+        close(pipefd[0]);
+
+        // El padre le envia el segundo numero al hijo por el pipe
+        write(pipefd[1], &num2, sizeof(num2));
+        close(pipefd[1]);
+
+        unsigned long long resultado_padre = factorial(num1);
+
+        // Esperamos a que el hijo termine para que no haya desorden en la terminal
+        wait(NULL);
+
+        printf("Padre calculo: %d! = %llu\n", num1, resultado_padre);
+      }
+
+      return 0;
+    }</code></pre>
+          </div>
+          <div class="pane output-pane">
+          <h3>Salida en Terminal</h3>
+          <pre><code>user@utm:~$ gcc -Wall factorial_padre_hijo.c -o factorial_padre_hijo
+    user@utm:~$ ./factorial_padre_hijo 5 6
+    Hijo calculo: 6! = 720
+    Padre calculo: 5! = 120</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que un pipe permite pasar datos del padre al hijo sin usar archivos temporales.
+            </p>
+            <p>
+              Se podria mejorar validando mejor los argumentos, comprobando el valor devuelto por read() y write()
+              y usando enteros mas grandes o control de overflow para factoriales altos.
+            </p>
+          </div>
+        </div>
+        </section>
+
+      <section class="card concept-card">
+        <h2>2.4 Sistema de llamado para identificar procesos</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+    #include &lt;unistd.h&gt;
+
+    int main(void) {
+      pid_t hijo;
+
+      hijo = fork();
+
+      if (hijo == 0) {
+        /* Codigo ejecutado por el proceso hijo */
+        fprintf(stdout, "Soy el hijo, PID=%ld\n", (long)getpid());
+      } else if (hijo &gt; 0) {
+        /* Codigo ejecutado por el proceso padre */
+        fprintf(stdout, "Soy el padre, PID=%ld\n", (long)getpid());
+      } else {
+        /* Error al crear el proceso */
+        perror("fork");
+        return EXIT_FAILURE;
+      }
+
+      return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+          <pre><code>user@utm:~$ gcc -Wall identificar_procesos.c -o identificar_procesos
+    user@utm:~$ ./identificar_procesos
+Soy el padre, PID=23697
+Soy el hijo, PID=23698</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que fork() devuelve dos flujos de ejecucion distintos y que cada uno puede identificar su PID.
+            </p>
+            <p>
+              Se podria mejorar imprimiendo tambien el PID del padre e hijo con un formato uniforme y manejando mejor
+              los errores de fork().
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>2.5 Sistema de llamada wait()</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+          <pre><code>#include &lt;sys/types.h&gt;
+    #include &lt;sys/wait.h&gt;
+    #include &lt;unistd.h&gt;
+    #include &lt;stdio.h&gt;
+    #include &lt;stdlib.h&gt;
+
+    int main()
+    {
+      pid_t hijo;
+      int estado;
+
+      if ( (hijo=fork()) == -1)
+      {
+        perror ("fallo el fork");
+        exit (EXIT_FAILURE);
+      }
+      else if (hijo == 0)
+        fprintf (stderr, "soy el hijo con pid = %ld \n", (long) getpid());
+      else if (wait(&estado) != hijo)
+        fprintf (stderr, "una señal debio interrumpir la espera \n");
+      else
+        fprintf (stderr, "soy el padre con pid = %ld e hijo con pid = %ld\n",
+             (long)getpid(), (long)hijo);
+
+      exit(EXIT_SUCCESS);
+    }</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+          <pre><code>user@utm:~$ gcc -Wall wait_demo.c -o wait_demo
+    user@utm:~$ ./wait_demo
+soy el hijo con pid = 12910 
+soy el padre con pid = 12909 e hijo con pid = 12910</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que wait() bloquea al padre hasta que el hijo termina y que sirve para evitar procesos
+              huerfanos o salidas desordenadas.
+            </p>
+            <p>
+              Se podria mejorar leyendo el estado con macros como WIFEXITED y WEXITSTATUS, ademas de separar mejor
+              el manejo de errores.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>2.5.1 Uso de waitpid()</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/wait.h&gt;
+#include &lt;unistd.h&gt;
+
+int main(int argc,char*argv[])
+{
+ pid_t hijo[5];
+ int estado,i,j;
+ long factorial=1;
+ for (j=0;j&lt;argc-1;j++) {
+  if ( (hijo[j]=fork())== -1)
+  {
+   perror ("fallo el fork");
+   exit (EXIT_FAILURE);
+  }
+  else
+  if (hijo[j] == 0)
+  {
+   fprintf (stdout, "soy el hijo con pid = %ld \n", (long) getpid());
+   for (i=atol(argv[j+1]);i&gt;0;i--) factorial=factorial*i;
+   fprintf(stdout,"El factorial de 20 es:%ld\n",factorial);
+   sleep(2);
+   exit(EXIT_SUCCESS);
+  }
+ }
+
+ for (j=0;j&lt;argc-1;j++) {
+  if ((waitpid(-1,&estado,0)==-1))
+   fprintf (stderr, "una señal debio interrumpir la espera \n");
+  else
+   fprintf(stdout,"el hijo:%d con pid %ld termino\n",j,(long)hijo[j]);
+ }
+
+ exit(EXIT_SUCCESS);
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+            <pre><code>user@utm:~$ gcc -Wall waitpid_demo.c -o waitpid_demo
+user@utm:~$ ./waitpid_demo 3 4 5
+soy el hijo con pid = 15009 
+El factorial de 20 es:6
+soy el hijo con pid = 15010 
+El factorial de 20 es:24
+soy el hijo con pid = 15011 
+El factorial de 20 es:120
+el hijo:0 con pid 15009 termino
+el hijo:1 con pid 15010 termino
+el hijo:2 con pid 15011 termino</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que waitpid() permite esperar procesos concretos y controlar mejor el orden de recolecta.
+            </p>
+            <p>
+              Se podria mejorar corrigiendo la salida del factorial, validando entradas numericas y capturando el
+              estado real de cada hijo.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>2.6 Sistema de llamada _exit() y exit()</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+int main(void) {
+    printf("Mensaje sin salto...");
+
+    if (fork() == 0) {
+        _exit(0);
+    }
+
+    exit(0);
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+            <pre><code>user@utm:~$ gcc exit_demo.c -o exit_demo
+user@utm:~$ ./exit_demo
+Mensaje sin salto...</code></pre>
+            <p class="output-note">
+              Nota: <strong>exit()</strong> vacia buffers stdio; <strong>_exit()</strong> termina de inmediato sin flush.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi la diferencia entre exit() y _exit() al terminar procesos despues de fork().
+            </p>
+            <p>
+              Se podria mejorar evitando depender de buffers sin vaciar, documentando mejor el efecto de cada salida
+              y comprobando el retorno de fork().
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>2.7 Estado Zombi</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;unistd.h&gt;
+
+int main(void) {
+    pid_t pid;
+    pid = fork();
+
+    if (pid == 0) { /* Proceso hijo */
+        printf("Hijo terminado. PID=%ld\n", (long)getpid());
+        exit(EXIT_SUCCESS);
+    } else { /* Proceso padre */
+        printf("Padre en ejecucion. PID=%ld\n", (long)getpid());
+        sleep(30); /* El padre NO llama a wait() */
+    }
+
+    return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+            <pre><code>user@utm:~$ gcc -Wall zombi_demo.c -o zombi_demo
+user@utm:~$ timeout 5s ./zombi_demo
+Padre en ejecucion. PID=16850
+Hijo terminado. PID=16851
+
+Command exited with code 124</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi como se genera un proceso zombi cuando el padre no llama a wait().
+            </p>
+            <p>
+              Se podria mejorar eliminando el sleep() en versiones finales, usando wait() o una señal SIGCHLD y
+              mostrando el estado zombi de forma mas controlada.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>2.8 Hilos</h2>
+        <p>
+          A diferencia de los procesos, los hilos comparten el mismo espacio de memoria del proceso padre. Son mas
+          ligeros y utiles para tareas concurrentes dentro de una misma aplicacion.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>2.8.2 Creacion de hilos </h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente</h3>
+            <p class="output-note">Nota: Este codigo es de las notas de la materia.</p>
+            <pre><code>#include &lt;pthread.h&gt;
+    #include &lt;stdio.h&gt;
+    #include &lt;stdlib.h&gt;
+
+    typedef struct dhilos {
+      int id;
+      long prod;
+    } DHILOS;
+
+    DHILOS pm_hilos[10];
+
+    void *factorial(void *valor);
+
+    int main(int argc, char *argv[])
+    {
+      pthread_t tid[argc - 1];
+      pthread_attr_t attr;
+      int i;
+      if (argc &lt; 2)
+      {
+        perror("Uso: ./chilos &lt;entero1&gt; &lt;entero2&gt; ... \n");
+        exit(1);
+      }
+      // Crear hilos
+      for (i = 0; i &lt; argc - 1; i++)
+      {
+        pthread_attr_init(&attr); // Atributos predeterminados
+        pm_hilos[i].id = i + 1;
+        pm_hilos[i].prod = atol(argv[i + 1]);
+        pthread_create(&tid[i], &attr, factorial, &pm_hilos[i]);
+      }
+      // espera el proceso principal a cada hilo creado
+      for (i = 0; i &lt; argc - 1; i++)
+        pthread_join(tid[i], NULL); // Esperar finalizacion, semejante a wait-cuando usa fork
+      for (i = 0; i &lt; argc - 1; i++)
+        printf("Hilo-%d calculo Factorial de: %s = %ld\n", pm_hilos[i].id, argv[i + 1], pm_hilos[i].prod);
+      return EXIT_SUCCESS;
+    }
+
+    void *factorial(void *valor)
+    {
+      int i = 1, prod = 1;
+      DHILOS *datos;
+      datos = (DHILOS *)valor;
+      while (i &lt;= datos-&gt;prod)
+        prod *= (i++);
+      datos-&gt;prod = prod;
+      pthread_exit(&(datos-&gt;prod));
+    }</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en Terminal</h3>
+          <pre><code>user@utm:~$ gcc -Wall chilos.c -lpthread -o chilos
+    user@utm:~$ ./chilos 3 4 5
+    Hilo-1 calculo Factorial de: 3 = 6
+    Hilo-2 calculo Factorial de: 4 = 24
+    Hilo-3 calculo Factorial de: 5 = 120</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>
+              Aprendi que los hilos comparten memoria y que pthread_join() permite sincronizar su finalizacion.
+            </p>
+            <p>
+              Se podria mejorar protegiendo datos compartidos con mutexes, evitando arreglos globales fijos y
+              validando los retornos de pthread_create() y pthread_join().
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+        </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">IPC en accion</a>
+        </div>
+
+        <div>
+          <h5>Institucion</h5>
+          <p>Universidad Tecnologica de la Mixteca</p>
+          <p>Huajuapan de Leon, Oaxaca</p>
+          <p>Ingenieria en Computacion</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 - Jafet Alejandro Vásquez Suárez y Abdiel Gónzales Gómez · UTM · Sistemas Operativos</p>
+        <p>6to Semestre · 2025-2026 · C/C++ · Linux · POSIX</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

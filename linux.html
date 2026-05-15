@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Linux en practica | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a class="active" href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">01</div>
+        <div>
+          <p class="kicker">Practica #1</p>
+          <h1>Comandos basicos de Linux y exploracion del sistema de archivos</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">Basico</span>
+          <span class="count">Linux</span>
+          <span class="count">Terminal</span>
+          <span class="count">Filesystem</span>
+        </div>
+      </section>
+
+      <section class="card objective-box">
+        <h2>Objetivo</h2>
+        <p>
+          Comprender y practicar los comandos fundamentales de Linux para moverse entre directorios, crear y
+          administrar archivos, y observar la estructura base del sistema desde la terminal.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Comandos basicos de Linux con explicacion</h2>
+        <div class="commands-grid">
+          <article class="command-item">
+            <h3>pwd</h3>
+            <p>Muestra la ruta absoluta del directorio en el que te encuentras trabajando.</p>
+          </article>
+
+          <article class="command-item">
+            <h3>ls -la</h3>
+            <p>Lista archivos y carpetas, incluyendo ocultos, con permisos, propietario y fecha de modificacion.</p>
+          </article>
+
+          <article class="command-item">
+            <h3>cd nombre_directorio</h3>
+            <p>Cambia el directorio actual. Con <strong>cd ..</strong> subes un nivel en la jerarquia.</p>
+          </article>
+
+          <article class="command-item">
+            <h3>mkdir practica_linux</h3>
+            <p>Crea un nuevo directorio para organizar archivos de trabajo o evidencias.</p>
+          </article>
+
+          <article class="command-item">
+            <h3>touch notas.txt</h3>
+            <p>Crea un archivo vacio, util para generar rapidamente plantillas de texto o scripts.</p>
+          </article>
+
+          <article class="command-item">
+            <h3>cp origen destino</h3>
+            <p>Copia archivos o directorios (con <strong>-r</strong>) sin modificar el archivo original.</p>
+          </article>
+
+          <article class="command-item">
+            <h3>mv archivo nuevo_nombre</h3>
+            <p>Mueve o renombra archivos y carpetas segun la ruta destino indicada.</p>
+          </article>
+
+          <article class="command-item">
+            <h3>cat archivo.txt</h3>
+            <p>Imprime el contenido de un archivo de texto directamente en la terminal.</p>
+          </article>
+
+          <article class="command-item">
+            <h3>find . -name "*.c"</h3>
+            <p>Busca archivos por nombre o patron a partir de la ruta actual.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="card terminal-block">
+        <h2>Como se veria la salida en una terminal de Linux</h2>
+        <h3>Terminal 1: ubicacion y listado inicial</h3>
+        <pre><code>jafet@utm:~$ pwd
+/home/jafet
+
+jafet@utm:~$ ls -la
+total 44
+drwxr-xr-x 6 jafet jafet 4096 may 13 10:22 .
+drwxr-xr-x 3 root  root  4096 mar  1 08:15 ..
+-rw-r--r-- 1 jafet jafet  220 mar  1 08:15 .bash_logout
+-rw-r--r-- 1 jafet jafet 3771 mar  1 08:15 .bashrc
+      drwxr-xr-x 2 jafet jafet 4096 may 13 10:20 Documentos</code></pre>
+
+        <h3>Terminal 2: creacion de directorio y archivos</h3>
+        <pre><code>jafet@utm:~$ mkdir practica_linux
+jafet@utm:~$ cd practica_linux
+jafet@utm:~/practica_linux$ touch comandos.txt
+jafet@utm:~/practica_linux$ echo "Repaso de comandos" > comandos.txt
+jafet@utm:~/practica_linux$ cat comandos.txt
+Repaso de comandos
+
+jafet@utm:~/practica_linux$ cp comandos.txt respaldo.txt
+jafet@utm:~/practica_linux$ mv respaldo.txt resumen.txt
+jafet@utm:~/practica_linux$ ls
+      comandos.txt  resumen.txt</code></pre>
+
+        <h3>Terminal 3: busqueda por patron</h3>
+        <pre><code>jafet@utm:~/practica_linux$ find . -name "*.txt"
+./comandos.txt
+      ./resumen.txt</code></pre>
+      </section>
+
+      <section class="card learning-box">
+        <h2>¿Que aprendi y como lo podria mejorar en conocimientos?</h2>
+
+        <h3>Lo que aprendi</h3>
+        <p>
+          Aprendi a interpretar mejor la estructura de directorios de Linux y a resolver tareas comunes sin depender de
+          interfaz grafica. Tambien entendi la diferencia entre copiar, mover y renombrar archivos, asi como la utilidad
+          de comandos de busqueda para ubicar informacion rapidamente.
+        </p>
+
+        <h3>Como lo mejoraria</h3>
+        <p>
+          Para mejorar, quiero practicar comandos con opciones avanzadas (<strong>grep</strong>, <strong>chmod</strong>,
+          <strong>chown</strong> y combinaciones con pipes), automatizar ejercicios con scripts bash y documentar casos
+          reales de uso en proyectos para consolidar los conceptos.
+        </p>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+        </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">IPC en accion</a>
+        </div>
+
+        <div>
+          <h5>Institucion</h5>
+          <p>Universidad Tecnologica de la Mixteca</p>
+          <p>Huajuapan de Leon, Oaxaca</p>
+          <p>Ingenieria en Computacion</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 - Jafet Alejandro Vásquez Suárez y Abdiel Gónzales Gómez · UTM · Sistemas Operativos</p>
+        <p>6to Semestre · 2025-2026 · C/C++ · Linux · POSIX</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

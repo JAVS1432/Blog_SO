@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Equipo | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>
+        <a href="terminal.html">Terminal</a>
+        <a class="active" href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">👥</div>
+        <div>
+          <p class="kicker">Conocenos</p>
+          <h1>El equipo detras de esta bitacora</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">UTM</span>
+          <span class="count">Ing. Computacion</span>
+          <span class="count">6to Semestre</span>
+          <span class="count">2025-2026</span>
+        </div>
+      </section>
+
+      <section class="card objective-box">
+        <h2>Quienes somos</h2>
+        <p>
+          Somos estudiantes de la <strong>Universidad Tecnologica de la Mixteca (UTM)</strong>, cursando el
+          6to semestre de la carrera de <strong>Ingenieria en Computacion</strong>. Esta bitacora forma
+          parte de nuestra evidencia practica para la materia de <strong>Sistemas Operativos</strong>,
+          donde exploramos temas como el manejo de Linux, procesos e hilos, y mecanismos de comunicacion
+          entre procesos (IPC).
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>Integrantes</h2>
+        <div class="example-grid" style="grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.2rem;">
+
+          <div class="card" style="padding: 1.5rem;">
+            <p class="kicker">Alumno</p>
+            <h3 style="margin: 0.4rem 0 0.8rem;">Jafet Alejandro Vásquez Suárez</h3>
+            <p style="font-size: 0.9rem; opacity: 0.8;">
+              Estudiante de Ingenieria en Computacion en la UTM. Apasionado por los sistemas de bajo nivel,
+              la programacion en C y el funcionamiento interno de los sistemas operativos.
+            </p>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <span class="count">C / C++</span>
+              <span class="count">Linux</span>
+              <span class="count">POSIX</span>
+            </div>
+          </div>
+
+          <div class="card" style="padding: 1.5rem;">
+            <p class="kicker">Alumno</p>
+            <h3 style="margin: 0.4rem 0 0.8rem;">Abdiel Gónzales Gómez</h3>
+            <p style="font-size: 0.9rem; opacity: 0.8;">
+              Estudiante de Ingenieria en Computacion en la UTM. Interesado en el desarrollo de software,
+              la administracion de sistemas y el analisis del comportamiento de procesos en entornos Unix.
+            </p>
+            <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <span class="count">C / C++</span>
+              <span class="count">Shell</span>
+              <span class="count">Sistemas</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Docente</h2>
+        <div class="card" style="padding: 1.5rem; max-width: 480px;">
+          <p class="kicker">Profesor</p>
+          <h3 style="margin: 0.4rem 0 0.8rem;">M.C. Gabriel Gerónimo Castillo</h3>
+          <p style="font-size: 0.9rem; opacity: 0.8;">
+            Maestro en Ciencias a cargo de la materia de Sistemas Operativos en la Universidad Tecnologica
+            de la Mixteca. Guia el aprendizaje practico de procesos, concurrencia y comunicacion entre
+            procesos en entornos Linux/POSIX.
+          </p>
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <span class="count">UTM</span>
+            <span class="count">Sistemas Operativos</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card learning-box">
+        <h2>Nuestra carrera</h2>
+        <p>
+          La <strong>Ingenieria en Computacion</strong> de la UTM nos forma en areas como arquitectura de
+          computadoras, programacion de sistemas, redes, inteligencia artificial y desarrollo de software.
+          La materia de Sistemas Operativos es un pilar fundamental que nos permite entender como
+          interactua el hardware con el software a nivel profundo, preparandonos para resolver problemas
+          reales en entornos profesionales.
+        </p>
+        <div style="margin-top: 1.2rem; display: flex; gap: 0.6rem; flex-wrap: wrap;">
+          <span class="count">Universidad Tecnologica de la Mixteca</span>
+          <span class="count">Huajuapan de Leon, Oaxaca</span>
+          <span class="count">6to Semestre · 2025-2026</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+        </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">IPC en accion</a>
+        </div>
+
+        <div>
+          <h5>Institucion</h5>
+          <p>Universidad Tecnologica de la Mixteca</p>
+          <p>Huajuapan de Leon, Oaxaca</p>
+          <p>Ingenieria en Computacion</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 - Jafet Alejandro Vásquez Suárez y Abdiel Gónzales Gómez · UTM · Sistemas Operativos</p>
+        <p>6to Semestre · 2025-2026 · C/C++ · Linux · POSIX</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

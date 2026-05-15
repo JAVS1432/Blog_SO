@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bitacora de Sistemas Operativos | Portafolio UTM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a class="active" href="#">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>        <a href="terminal.html">Terminal</a>        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <h2>Mapa del Sitio</h2>
+        </div>
+
+        <a class="topic" href="linux.html">
+          <span class="topic-title">Bloque 1: Linux de uso diario</span>
+          <span class="topic-chip">Tema 1</span>
+        </a>
+
+        <a class="topic" href="procesos.html">
+          <span class="topic-title">Bloque 2: Procesos e hilos</span>
+          <span class="topic-chip">Tema 2</span>
+        </a>
+
+        <a class="topic" href="ipc.html">
+          <span class="topic-title">Bloque 3: Coordinacion con IPC</span>
+          <span class="topic-chip">Tema 3</span>
+        </a>
+
+        <p class="sidebar-note">
+          Materia: Sistemas Operativos<br />
+          Semestre: 6to - 2025-2026<br />
+          Docente: M.C. Gabriel Gerónimo Castillo
+        </p>
+      </aside>
+
+      <main class="content">
+        <section class="hero card with-grid">
+          <p class="hero-tag">Bitacora academica · Sistemas Operativos</p>
+          <h1>Laboratorio de Sistemas Operativos: aprendizaje aplicado</h1>
+          <p class="lead">
+            Este sitio recopila nuestro recorrido en la materia desde una perspectiva practica: cada entrega combina
+            teoria sintetizada, implementaciones en C/C++, evidencia de ejecucion en consola y una lectura critica de
+            resultados. La meta es mostrar progreso real, no solo resultados finales.
+          </p>
+
+          <div class="meta">
+            <span>Autores: Jafet Alejandro Vásquez Suárez</span>
+            <span>Autores: Abdiel Gónzales Gómez</span>
+            <span>Programa: Ingenieria en Computacion</span>
+            <span>Ciclo: 6to Semestre · 2025-2026</span>
+            <span>Asesoria: M.C. Gabriel Gerónimo Castillo</span>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn btn-solid" href="linux.html">Explorar evidencias</a>
+            <a class="btn btn-outline" href="procesos.html">Ir a Procesos e Hilos</a>
+          </div>
+        </section>
+
+        <div class="divider">
+          <span>Contexto del proyecto</span>
+        </div>
+
+        <section class="card">
+          <h2>Enfoque y metodologia del portafolio</h2>
+          <p>
+            Este portafolio surge como una bitacora de practicas del curso de <strong>Sistemas Operativos</strong> en
+            sexto semestre. Cada actividad fue organizada para responder una pregunta tecnica concreta y dejar
+            evidencia del razonamiento que nos llevo a cada solucion.
+          </p>
+          <p>
+            La estructura se divide en tres rutas: manejo de Linux, ejecucion concurrente y comunicacion entre
+            procesos. En lugar de presentar solo definiciones, priorizamos ejercicios que ponen a prueba el
+            comportamiento real del sistema operativo en escenarios controlados.
+          </p>
+          <p>
+            En cada entrega registramos: <strong>idea base</strong>, <strong>codigo implementado</strong>,
+            <strong>salida observada</strong> y <strong>reflexion tecnica</strong>. Esta forma de documentar nos permite
+            justificar decisiones, detectar mejoras y mostrar dominio progresivo de los conceptos.
+          </p>
+        </section>
+
+        <section class="portfolio">
+          <h2 class="portfolio-title">Rutas de trabajo</h2>
+
+          <div class="portfolio-grid">
+            <a class="portfolio-card" href="linux.html">
+              <div>
+                <p class="kicker">Tema 1</p>
+                <h3>Linux en practica</h3>
+                <p>
+                  Administracion de archivos, control de permisos y automatizacion con scripts orientados a resolver
+                  tareas cotidianas del entorno Unix.
+                </p>
+              </div>
+              <span class="count">3 entregas</span>
+            </a>
+
+            <a class="portfolio-card" href="procesos.html">
+              <div>
+                <p class="kicker">Tema 2</p>
+                <h3>Procesos e Hilos</h3>
+                <p>
+                  Analisis de creacion de procesos con fork(), uso de hilos POSIX y control de regiones criticas por
+                  medio de mecanismos de sincronizacion.
+                </p>
+              </div>
+              <span class="count">3 entregas</span>
+            </a>
+
+            <a class="portfolio-card" href="ipc.html">
+              <div>
+                <p class="kicker">Tema 3</p>
+                <h3>IPC en accion</h3>
+                <p>
+                  Integracion de pipes, memoria compartida y semaforos para construir intercambio de datos entre
+                  procesos con control de orden y consistencia.
+                </p>
+              </div>
+              <span class="count">3 entregas</span>
+            </a>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+        </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">IPC en accion</a>
+        </div>
+
+        <div>
+          <h5>Institucion</h5>
+          <p>Universidad Tecnologica de la Mixteca</p>
+          <p>Huajuapan de Leon, Oaxaca</p>
+          <p>Ingenieria en Computacion</p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 - Jafet Alejandro Vásquez Suárez y Abdiel Gónzales Gómez · UTM · Sistemas Operativos</p>
+        <p>6to Semestre · 2025-2026 · C/C++ · Linux · POSIX</p>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
