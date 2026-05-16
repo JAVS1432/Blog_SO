@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interbloqueo e Inanicion | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+          </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>
+        <a class="active" href="interbloqueo.html">Interbloqueo e Inanicion</a>
+        <a href="memoria.html">Administracion de Memoria</a>
+        <a href="archivo.html">Arquitectura de Archivos</a>
+        <a href="senales.html">Senales</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">04</div>
+        <div>
+          <p class="kicker">Practica #4</p>
+          <h1>Interbloqueo e Inanicion</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">Deadlock</span>
+          <span class="count">Inanicion</span>
+          <span class="count">Banquero</span>
+          <span class="count">Planificacion</span>
+        </div>
+      </section>
+
+      <section class="card objective-box">
+        <h2>Concepto general</h2>
+        <p>
+          El interbloqueo es el bloqueo permanente de un conjunto de procesos que compiten por recursos.
+          Para que ocurra deben cumplirse cuatro condiciones: exclusión mutua, retencion y espera,
+          no apropiacion y espera circular.
+        </p>
+        <p>
+          La inanicion ocurre cuando un proceso espera indefinidamente un evento debido a las politicas
+          de planificacion, aun cuando el sistema sigue avanzando para otros procesos.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>4.1 Prevencion</h2>
+        <p>
+          La prevencion consiste en eliminar al menos una de las cuatro condiciones necesarias para que
+          aparezca el interbloqueo. Por ejemplo, imponer un orden total en la solicitud de recursos evita
+          la espera circular.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>4.2 Algoritmo del Banquero</h2>
+        <p>
+          Es una estrategia para evitar interbloqueos simulando la asignacion de recursos antes de
+          confirmar una solicitud. El sistema solo concede recursos si el estado resultante sigue siendo
+          seguro, es decir, si existe una secuencia posible de finalizacion para todos los procesos.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>4.3 Deteccion y Recuperacion</h2>
+        <p>
+          Cuando no se previene ni evita el interbloqueo, se necesita deteccion y recuperacion. Esto
+          implica identificar ciclos de espera y aplicar medidas como abortar procesos, reiniciarlos,
+          o retirar recursos para romper el bloqueo.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>4.4 Codigo: Simulacion conceptual del Algoritmo del Banquero</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente (C)</h3>
+            <p class="output-note">Basado en la subrutina de Dijkstra.</p>
+            <pre><code>// Basado en la subrutina de Dijkstra
+int dinero = efectivo;
+boolean seguro, inseguro[N];
+
+for(i = 1; i &lt;= N; i++) inseguro[i] = TRUE;
+for(i = 1; i &lt;= N; i++) {
+    if (inseguro[i] &amp;&amp; (demanda[i] &lt;= dinero)) {
+        inseguro[i] = FALSE;
+        dinero = dinero + prestamo[i];
+    }
+}
+if (dinero == capital) seguro = TRUE;
+else seguro = FALSE;</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en terminal</h3>
+            <pre><code>=== Algoritmo del Banquero ===
+Capital inicial: 100
+
+Evaluando procesos:
+
+Proceso 1: demanda=60, dinero=100 -&gt; SEGURO
+  Dinero recuperado: dinero ahora = 150
+
+Proceso 2: demanda=70, dinero=150 -&gt; SEGURO
+  Dinero recuperado: dinero ahora = 210
+
+Proceso 3: demanda=60, dinero=210 -&gt; SEGURO
+  Dinero recuperado: dinero ahora = 260
+
+Proceso 4: demanda=80, dinero=260 -&gt; SEGURO
+  Dinero recuperado: dinero ahora = 335
+
+Proceso 5: demanda=90, dinero=335 -&gt; SEGURO
+  Dinero recuperado: dinero ahora = 420
+
+Dinero final: 420
+Estado: INSEGURO</code></pre>
+            <p>
+              El algoritmo marca como inseguros a todos los procesos y trata de encontrar procesos cuya
+              demanda pendiente pueda cubrirse con el dinero disponible. Si un proceso puede terminar,
+              "devuelve" su prestamo y aumenta el dinero disponible para continuar evaluando al resto.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>Aprendi a diferenciar entre un estado seguro y uno inseguro, y a comprobar por que no todas las solicitudes deben aceptarse aunque haya recursos disponibles en ese momento.</p>
+            <p>Se puede mejorar incorporando entradas dinamicas de maximo, asignado y disponible, ademas de mostrar la secuencia segura paso a paso en cada iteracion.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+          </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">IPC en accion</a>
+          <a href="interbloqueo.html">Interbloqueo e Inanicion</a>
+        </div>
+
+        <div>
+          <h5>Institucion</h5>
+          <p>Universidad Tecnologica de la Mixteca</p>
+          <p>Huajuapan de Leon, Oaxaca</p>
+          <p>Ingenieria en Computacion</p>
+          </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 - Jafet Alejandro Vásquez Suárez y Abdiel Gónzales Gómez · UTM · Sistemas Operativos</p>
+        <p>6to Semestre · 2025-2026 · C/C++ · Linux · POSIX</p>
+          </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

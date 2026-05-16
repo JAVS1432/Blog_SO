@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administracion de Memoria | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+          </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>
+        <a href="interbloqueo.html">Interbloqueo e Inanicion</a>
+        <a class="active" href="memoria.html">Administracion de Memoria</a>
+        <a href="archivo.html">Arquitectura de Archivos</a>
+        <a href="senales.html">Senales</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">05</div>
+        <div>
+          <p class="kicker">Practica #5</p>
+          <h1>Administracion de Memoria</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">Paginacion</span>
+          <span class="count">Segmentacion</span>
+          <span class="count">Swap</span>
+          <span class="count">Memoria Virtual</span>
+        </div>
+      </section>
+
+      <section class="card objective-box">
+        <h2>Concepto general</h2>
+        <p>
+          El sistema operativo gestiona la memoria principal asignandola y compartiendola entre procesos activos para
+          mantener estabilidad y rendimiento. Esta gestion permite que multiples programas se ejecuten al mismo tiempo
+          sin invadir el espacio de memoria de otros procesos.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>5.1 Paginacion y Segmentacion</h2>
+        <p>
+          La paginacion divide la memoria en bloques de tamaño fijo llamados paginas, mientras que la segmentacion la
+          divide en regiones de tamaño variable relacionadas con la logica del programa (codigo, datos, pila, etc.).
+          Ambos enfoques permiten administrar mejor la asignacion y proteccion de memoria.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>5.2 Intercambio (Swap)</h2>
+        <p>
+          El swap mueve temporalmente procesos o paginas desde RAM al disco para liberar espacio cuando la memoria
+          fisica es limitada. Aunque permite continuar la ejecucion, un uso excesivo de swap degrada el rendimiento por
+          la diferencia de velocidad entre RAM y almacenamiento secundario.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>5.3 Memoria Virtual</h2>
+        <p>
+          La memoria virtual permite ejecutar programas que aparentan disponer de mas memoria de la que existe
+          fisicamente. Con apoyo de la MMU y tablas de paginas, el sistema traduce direcciones virtuales a marcos de
+          pagina en memoria real, aislando procesos y mejorando seguridad.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>5.4 Codigo: Obtener tamano de pagina</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente (C)</h3>
+            <p class="output-note">Consulta del tamano de pagina con sysconf y getpagesize.</p>
+            <pre><code>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+
+int main()
+{
+    printf("Tamano de pagina:%d \n\n", (int)sysconf(_SC_PAGESIZE));
+    printf("Tamano de pagina:%d \n\n", (int)getpagesize());
+    return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en terminal</h3>
+            <pre><code>Tamano de pagina:4096
+
+Tamano de pagina:4096</code></pre>
+            <p>
+              Ambos metodos devolvieron 4096 bytes, lo que confirma el tamano de pagina del sistema en este entorno.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>Aprendi que el tamano de pagina condiciona como se organiza la memoria virtual y que puede verificarse con distintas llamadas del sistema para corroborar resultados.</p>
+            <p>Se puede mejorar validando errores de cada llamada y comparando la salida con utilidades del sistema para confirmar consistencia en distintos entornos.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>5.5 Codigo: Obtener informacion estadistica del sistema</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente (C)</h3>
+            <p class="output-note">Uso de la funcion sysinfo para recabar datos de RAM y Swap.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;sys/sysinfo.h&gt;
+
+int main() {
+    struct sysinfo si;
+    sysinfo(&amp;si);
+    printf("Total RAM: %ld KB\n", si.totalram / 1024);
+    printf("Libre RAM: %ld KB\n", si.freeram / 1024);
+    printf("Swap Total: %ld KB\n", si.totalswap / 1024);
+    return 0;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en terminal</h3>
+            <pre><code>Total RAM: 15991580 KB
+Libre RAM: 8719976 KB
+Swap Total: 4194300 KB</code></pre>
+            <p>
+              Este programa consulta al kernel para obtener metricas globales de memoria. Los datos sirven para evaluar
+              el estado del sistema, detectar presion de memoria y decidir ajustes en la ejecucion de procesos.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>Aprendi a interpretar RAM total, RAM libre y swap para describir el estado global del sistema y detectar cuando existe presion de memoria.</p>
+            <p>Se puede mejorar calculando porcentajes de uso y registrando muestras periodicas para analizar tendencias de consumo durante mas tiempo.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>5.6 Lo que aprendi</h2>
+        <p>
+          Aprendi a diferenciar memoria fisica y memoria virtual, asi como a interpretar por que un sistema puede
+          seguir funcionando aun con RAM limitada gracias al swap. Tambien comprendi que paginacion y segmentacion no
+          solo son conceptos teoricos: impactan directamente en rendimiento, proteccion y organizacion de procesos.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>5.7 Como mejorarlo</h2>
+        <p>
+          Para mejorar esta practica se puede ampliar el programa para mostrar memoria usada, porcentaje de ocupacion y
+          evolucion en el tiempo mediante muestreo periodico. Tambien es recomendable comparar resultados con herramientas
+          de sistema como <strong>free</strong>, <strong>vmstat</strong> o <strong>top</strong> para validar mediciones.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+          </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">IPC en accion</a>
+          <a href="interbloqueo.html">Interbloqueo e Inanicion</a>
+          <a href="memoria.html">Administracion de Memoria</a>
+        </div>
+
+        <div>
+          <h5>Institucion</h5>
+          <p>Universidad Tecnologica de la Mixteca</p>
+          <p>Huajuapan de Leon, Oaxaca</p>
+          <p>Ingenieria en Computacion</p>
+          </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 - Jafet Alejandro Vásquez Suárez y Abdiel Gónzales Gómez · UTM · Sistemas Operativos</p>
+        <p>6to Semestre · 2025-2026 · C/C++ · Linux · POSIX</p>
+          </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

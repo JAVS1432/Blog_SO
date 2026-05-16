@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arquitectura del Sistema de Archivos | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+          </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>
+        <a href="interbloqueo.html">Interbloqueo</a>
+        <a href="memoria.html">Administracion de Memoria</a>
+        <a class="active" href="archivo.html">Arquitectura de Archivos</a>
+        <a href="senales.html">Senales</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">06</div>
+        <div>
+          <p class="kicker">Practica #6</p>
+          <h1>Arquitectura del Sistema de Archivos</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">Inodos</span>
+          <span class="count">Metadatos</span>
+          <span class="count">Bloques de Datos</span>
+          <span class="count">Jerarquia</span>
+        </div>
+      </section>
+
+      <section class="card objective-box">
+        <h2>Concepto general</h2>
+        <p>
+          En Linux, el sistema de archivos es logico y jerarquico. Se compone de cuatro secciones: Boot (arranque),
+          Superbloque (metadatos del sistema), Lista de inodos (descripcion de archivos) y Bloque de datos. Esta
+          estructura permite administrar eficientemente el almacenamiento y acceso a archivos.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>6.1 Inodos</h2>
+        <p>
+          Cada archivo tiene un inodo con su informacion administrativa: propietario, permisos, tamaño, timestamps de
+          creacion y modificacion. Sin embargo, el nombre del archivo no se almacena en el inodo, sino en el directorio
+          que lo contiene.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>6.2 Tipos de archivos</h2>
+        <p>
+          Linux reconoce varios tipos de archivos: regulares (datos), directorios (colecciones de archivos), de
+          dispositivos en bloque o caracter (interfaces a hardware) y de comunicacion como tuberias (pipes) para
+          transferencia de datos entre procesos.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>6.3 Entrada/Salida (E/S)</h2>
+        <p>
+          Los controladores (drivers) gestionan la comunicacion con perifericos. El kernel abstrae los detalles hardware
+          a traves de interfaces estandarizadas, permitiendo que las aplicaciones accedan a dispositivos de manera
+          uniforme sin conocer sus particularidades tecnicas.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>6.4 Codigo: Informacion del Sistema de Archivos</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente (C)</h3>
+            <p class="output-note">Uso de statvfs para obtener informacion estadistica del sistema de archivos.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/statvfs.h&gt;
+int main()
+{
+ struct statvfs vfs;
+ char *ruta="/";
+ if (statvfs(ruta, &amp;vfs) != 0) {
+ perror ("llamado de statvfs");
+ exit(EXIT_FAILURE);
+ }
+ printf("\tArchivo:%s",ruta);
+ printf("\tTamaño de bloques: %ld\n", (long) vfs.f_bsize);
+ printf("\tTamaño de fragmento: %ld\n", (long) vfs.f_frsize);
+ printf("\tTamaño en unidades: %lu\n", (unsigned long) vfs.f_blocks);
+ printf("\tBloques libres %lu\n", (unsigned long) vfs.f_bfree);
+ printf("\tBloques Disponibles: %lu\n", (unsigned long) vfs.f_bavail);
+ printf("\tNúmero de Inodos: %lu\n", (unsigned long) vfs.f_files);
+ printf("\tNúmero de Inodos Libres: %lu\n", (unsigned long) vfs.f_ffree);
+ printf("\tNúmero de Inodos Disponibles: %lu\n", (unsigned long) vfs.f_favail);
+ printf("\tID del S.A.: %#lx\n", (unsigned long) vfs.f_fsid);
+ printf("\tBandera: ");
+ if (vfs.f_flag == 0) printf("(Ninguna)\n");
+ else {
+if ((vfs.f_flag &amp; ST_RDONLY) != 0) printf("ST_RDONLY ");
+if ((vfs.f_flag &amp; ST_NOSUID) != 0) printf("ST_NOSUID");
+printf("\n");
+}
+ printf("\tLongitud max para archivo: %ld\n", (long)vfs.f_namemax);
+ return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en terminal</h3>
+            <pre><code>Archivo:/       Tamaño de bloques: 4096
+Tamaño de fragmento: 4096
+Tamaño en unidades: 51276028
+Bloques libres 40982405
+Bloques Disponibles: 38359519
+Número de Inodos: 13099008
+Número de Inodos Libres: 12444384
+Número de Inodos Disponibles: 12444384
+ID del S.A.: 0xd8cd624d29e45242
+Bandera: 
+Longitud max para archivo: 255</code></pre>
+            <p>
+              Este programa consulta el sistema de archivos raiz (/) usando statvfs y muestra informacion como el
+              tamaño de bloques, bloques libres, numero total de inodos y su disponibilidad. Estos datos revelan
+              estadisticas del sistema de archivos sin acceder a archivos individuales.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>Aprendi a interpretar bloques e inodos disponibles para estimar la salud del sistema de archivos sin necesidad de herramientas adicionales.</p>
+            <p>Se puede mejorar calculando porcentajes de ocupacion y comparando varias rutas para identificar diferencias entre sistemas montados.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>6.5 Codigo: Recuperar informacion de un Inodo</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente (C)</h3>
+            <p class="output-note">Uso de la funcion stat para obtener metadatos de un archivo.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;time.h&gt;
+
+int main(int argc, char *argv[]) {
+    struct stat sb;
+    if (stat(argv[1], &amp;sb) == -1) return 1;
+
+    printf("I-nodo: %ld\n", (long) sb.st_ino);
+    printf("Tamaño: %lld bytes\n", (long long) sb.st_size);
+    printf("Ultimo cambio: %s", ctime(&amp;sb.st_ctime));
+    return 0;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en terminal</h3>
+            <pre><code>I-nodo: 11162033
+Tamaño: 484 bytes
+Ultimo cambio: Sat May 16 14:50:09 2026</code></pre>
+            <p>
+              Este programa consulta el inodo del archivo stat_inode.c y muestra su numero de inodo, tamaño en bytes
+              y timestamp del ultimo cambio. Estos metadatos revelan informacion administrativa del archivo sin leer
+              su contenido.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>Aprendi que el inodo concentra metadatos esenciales del archivo y que su identificador permite rastrear objetos de forma precisa.</p>
+            <p>Se puede mejorar validando argumentos y mostrando mas campos como permisos, propietario, grupo y cantidad de enlaces.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>6.6 Codigo: Informacion de Dispositivos</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente (C)</h3>
+            <p class="output-note">Uso de stat para identificar dispositivos y obtener numeros major/minor.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/sysmacros.h&gt; 
+int main(int argc, char *argv[])
+{
+ struct stat sb;
+ if (argc != 2) {
+ fprintf(stderr, "Uso: %s &lt;ruta_dispositivo&gt;\n", argv[0]);
+ exit(EXIT_FAILURE);
+ }
+ // stat obtiene información sobre el archivo de dispositivo
+ if (stat(argv[1], &amp;sb) == -1) {
+ perror("stat");
+ exit(EXIT_FAILURE);
+ }
+ // Verificar si es un dispositivo de bloques o caracteres
+ printf("Archivo: %s\n", argv[1]);
+ if (S_ISCHR(sb.st_mode)) {
+ printf("Tipo: Dispositivo de caracteres (Char)\n");
+ } else if (S_ISBLK(sb.st_mode)) {
+ printf("Tipo: Dispositivo de bloques (Block)\n");
+ } else {
+ printf("Tipo: No es un dispositivo de bloques o caracteres\n");
+ exit(EXIT_FAILURE);
+ }
+ // major() y minor() extraen los números correspondientes
+ printf("Número Mayor (Major): %u\n", major(sb.st_rdev));
+ printf("Número Menor (Minor): %u\n", minor(sb.st_rdev));
+ return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+          <div class="pane output-pane">
+            <h3>Salida en terminal</h3>
+            <pre><code>Archivo: /dev/null
+Tipo: Dispositivo de caracteres (Char)
+Número Mayor (Major): 1
+Número Menor (Minor): 3</code></pre>
+            <p>
+              Este programa examina el archivo especial /dev/null identificando que es un dispositivo de caracteres
+              (Char) con numero mayor 1 y numero menor 3. Los numeros major y minor identifican de manera unica a cada
+              dispositivo en el sistema, permitiendo al kernel dirigir operaciones al driver correcto.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>Aprendi a distinguir dispositivos de bloque y caracter, y a interpretar major/minor para entender su relacion con el driver.</p>
+            <p>Se puede mejorar aceptando varias rutas en una sola ejecucion y mostrando errores mas claros para cada dispositivo evaluado.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>6.7 Lo que aprendí</h2>
+        <p>
+          Aprendi a entender la separacion entre inodo y nombre de archivo, asi como la importancia de los metadatos
+          en la administracion del sistema. Comprendi que el kernel abstrae la complejidad hardware y que la jerarquia
+          del sistema de archivos es la clave para la organizacion logica del almacenamiento.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>6.8 Cómo mejorarlo</h2>
+        <p>
+          Para mejorar esta practica se puede expandir el programa para mostrar mas metadatos como permisos en formato
+          octal, propietario y grupo, cantidad de enlaces, y bloques asignados. Tambien es util comparar inodos
+          de archivos en diferentes sistemas de archivos para entender variaciones de implementacion.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+          </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">IPC en accion</a>
+          <a href="interbloqueo.html">Interbloqueo e Inanicion</a>
+          <a href="memoria.html">Administracion de Memoria</a>
+          <a href="archivo.html">Arquitectura de Archivos</a>
+        <a href="senales.html">Senales</a>
+        </div>
+
+        <div>
+          <h5>Institucion</h5>
+          <p>Universidad Tecnologica de la Mixteca</p>
+          <p>Huajuapan de Leon, Oaxaca</p>
+          <p>Ingenieria en Computacion</p>
+          </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2025 - Jafet Alejandro Vásquez Suárez y Abdiel Gónzales Gómez · UTM · Sistemas Operativos</p>
+        <p>6to Semestre · 2025-2026 · C/C++ · Linux · POSIX</p>
+          </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>

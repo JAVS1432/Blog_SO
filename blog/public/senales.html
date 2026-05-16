@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Senales | Bitacora SO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon">&gt;_</span>
+        <div>
+          <p class="brand-title">Bitacora SO</p>
+          <p class="brand-subtitle">Jafet y Abdiel · Ingenieria en Computacion · UTM</p>
+          </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Principal">
+        <a href="index.html">Panorama</a>
+        <a href="linux.html">Entorno Linux</a>
+        <a href="procesos.html">Procesos e Hilos</a>
+        <a href="ipc.html">Comunicacion IPC</a>
+        <a href="interbloqueo.html">Interbloqueo</a>
+        <a href="memoria.html">Administracion de Memoria</a>
+        <a href="archivo.html">Arquitectura de Archivos</a>
+        <a class="active" href="senales.html">Senales</a>
+        <a href="terminal.html">Terminal</a>
+        <a href="equipo.html">Equipo</a>
+      </nav>
+
+      <button class="mode-button" id="modeToggle" aria-label="Cambiar modo">☼</button>
+    </header>
+
+    <main class="linux-page">
+      <section class="card practice-header">
+        <div class="practice-id">07</div>
+        <div>
+          <p class="kicker">Practica #7</p>
+          <h1>Senales</h1>
+        </div>
+        <div class="practice-tags">
+          <span class="count">SIGINT</span>
+          <span class="count">SIGKILL</span>
+          <span class="count">SIGALRM</span>
+          <span class="count">Manejadores</span>
+        </div>
+      </section>
+
+      <section class="card objective-box">
+        <h2>Concepto general</h2>
+        <p>
+          Las señales son interrupciones de software que informan a un proceso sobre eventos asincronos. Un proceso
+          puede ignorar la señal, usar la accion por defecto del sistema (generalmente terminar) o registrar un
+          manejador personalizado para responder de forma controlada.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>7.1 Acciones ante una señal</h2>
+        <p>
+          Ante una señal, el proceso puede: ignorarla, aceptar la accion por defecto o ejecutar una rutina propia.
+          Esta flexibilidad es clave para construir programas robustos que limpien recursos y continúen operando
+          en escenarios inesperados.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>7.2 Señales comunes</h2>
+        <p>
+          Entre las mas usadas estan SIGINT (Ctrl+C), SIGKILL (terminacion forzosa que no puede ignorarse) y SIGALRM
+          (notificacion de temporizador). Estas señales permiten coordinar control de ejecucion, cancelacion y tiempos
+          limite en aplicaciones y scripts.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>7.3 Control de flujo no local</h2>
+        <p>
+          Las funciones setjmp y longjmp permiten realizar saltos no locales cuando ocurre una señal. Son utiles para
+          recuperar control desde contextos profundos del programa, aunque deben usarse con cuidado para evitar estados
+          inconsistentes.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>7.4 Codigo: Tratamiento de una señal (Ctrl+C)</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente (C)</h3>
+            <p class="output-note">Manejador personalizado para SIGINT con signal().</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+void manejador(int sig) {
+    printf("Senal %d recibida. No morire tan facil.\n", sig);
+}
+
+int main() {
+    // Establece la rutina de tratamiento
+    if (signal(SIGINT, manejador) == SIG_ERR) exit(1);
+
+    while (1) {
+        printf("Esperando Ctrl+c...\n");
+        sleep(2);
+    }
+    return 0;
+}</code></pre>
+          </div>
+
+          <div class="pane output-pane">
+            <h3>Salida en terminal</h3>
+            <pre><code>Esperando Ctrl+c...
+Esperando Ctrl+c...
+Esperando Ctrl+c...
+Senal 2 recibida. No morire tan facil.
+Esperando Ctrl+c...
+Terminado (killed)</code></pre>
+            <p>
+              El programa entra en un ciclo esperando interrupciones. Cuando llega SIGINT (2), el manejador imprime un
+              mensaje y el proceso continua. Esto demuestra como una señal puede capturarse para modificar el
+              comportamiento por defecto del programa.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>Aprendi a interceptar SIGINT con un manejador para cambiar la respuesta por defecto y mantener el control del proceso.</p>
+            <p>Se puede mejorar migrando a <strong>sigaction()</strong> y agregando una rutina de cierre ordenado para liberar recursos.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>7.5 Codigo: setjmp/longjmp con SIGUSR1</h2>
+        <div class="example-grid">
+          <div class="pane code-pane">
+            <h3>Codigo Fuente (C)</h3>
+            <p class="output-note">Salto no local con setjmp/longjmp al recibir SIGUSR1.</p>
+            <pre><code>#include &lt;stdio.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;setjmp.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+
+jmp_buf env;
+
+void sigusr1_handler(int sig) {
+        signal(SIGUSR1, sigusr1_handler);
+        longjmp(env, 1);
+      }
+
+      int main() {
+        int i;
+
+        signal(SIGUSR1, sigusr1_handler);
+
+        for (i = 0; i &lt; 10; i++) {
+          if (setjmp(env) == 0)
+            printf("Punto a regresar en el estado %d\n", i);
+          else
+            printf("Regreso al punto del estado %d\n", i);
+
+          fflush(stdout);
+          sleep(10);
+        }
+
+        return EXIT_SUCCESS;
+}</code></pre>
+          </div>
+
+          <div class="pane output-pane">
+            <h3>Salida en terminal</h3>
+            <pre><code>Punto a regresar en el estado 0
+Regreso al punto del estado 0</code></pre>
+            <p>
+              Este ejemplo muestra un salto no local: al iniciar, setjmp guarda un punto de retorno. Cuando llega
+              SIGUSR1, el manejador ejecuta longjmp y la ejecucion regresa al bloque alterno del setjmp. Es util para
+              recuperar control rapidamente ante eventos asincronos.
+            </p>
+          </div>
+          <div class="pane output-pane">
+            <h3>Lo que aprendi y como se podria mejorar</h3>
+            <p>Aprendi como setjmp y longjmp permiten recuperar flujo de ejecucion despues de una señal asincrona en puntos de control definidos.</p>
+            <p>Se puede mejorar validando estados antes del salto y documentando las restricciones para evitar inconsistencias en variables compartidas.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card concept-card">
+        <h2>7.6 Lo que aprendí</h2>
+        <p>
+          Aprendi que las señales son un mecanismo esencial de comunicacion asincrona entre el sistema y los procesos.
+          Tambien comprendi la diferencia entre señales capturables y no capturables, y como un manejador puede cambiar
+          la respuesta de una aplicacion ante eventos externos.
+        </p>
+      </section>
+
+      <section class="card concept-card">
+        <h2>7.7 Cómo mejorarlo</h2>
+        <p>
+          Como mejora, se puede migrar de signal() a sigaction() para un control mas fino y portable, ademas de agregar
+          manejo de SIGTERM/SIGALRM y limpieza segura de recursos en el manejador.
+        </p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-grid">
+        <div>
+          <h4>Bitacora SO</h4>
+          <p>
+            Registro academico del curso de Sistemas Operativos, enfocado en evidencia practica, analisis tecnico y
+            mejora continua en cada bloque tematico.
+          </p>
+          </div>
+
+        <div>
+          <h5>Bloques</h5>
+          <a href="linux.html">Linux en practica</a>
+          <a href="procesos.html">Procesos e Hilos</a>
+          <a href="ipc.html">IPC en accion</a>
+          <a href="interbloqueo.html">Interbloqueo e Inanicion</a>
+          <a href="memoria.html">Administracion de Memoria</a>
+          <a href="archivo.html">Arquitectura de Archivos</a>
+          <a href="senales.html">Senales</a>
+        </div>
+
+        <div>
+          <h5>Institucion</h5>
+          <p>Universidad Tecnologica de la Mixteca</p>
+          <p>Ingenieria en Computacion</p>
+          </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
